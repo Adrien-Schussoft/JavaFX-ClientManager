@@ -13,6 +13,7 @@ import java.io.IOException;
 
 /**
  * JavaFX App
+ * @author Adrien Dessartre
  */
 public class App extends Application {
 
@@ -20,8 +21,8 @@ public class App extends Application {
 
     @Override
     public void start(Stage stage) throws IOException {
-        scene = new Scene(loadFXML("view/primary"), 640, 480);
-        stage.setTitle("The tableau");
+        scene = new Scene(loadFXML("view/primary"), 640, 400);
+        stage.setTitle("Users Management");
         stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             @Override
             public void handle(WindowEvent t) {

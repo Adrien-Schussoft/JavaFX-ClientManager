@@ -6,21 +6,22 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
-public class ClientDAO {
+public class ClientDAO extends Connexion {
 
     private Connection conn;
 
     public ClientDAO(){
-        conn = Connexion.getConnexion();
+
     }
 
     /**
      * Create a new client in database.
      * @param cli
      */
-    public void Insert(Client cli) {
+    public void insert(Client cli) {
 
         try {
+            conn = Connexion.getConnexion();
             String query = "INSERT INTO client (cli_nom, cli_prenom, cli_ville) VALUES (?, ?, ?)";
             PreparedStatement stm = conn.prepareStatement(query);
             stm.setString(1, cli.getNom());
@@ -35,12 +36,13 @@ public class ClientDAO {
     }
 
     /**
-     * Update an existing client in database.
+     * update an existing client in database.
      * @param cli
      */
-    public void Update(Client cli) {
+    public void update(Client cli) {
 
         try{
+            conn = Connexion.getConnexion();
             String query = "UPDATE client SET cli_nom = (?),cli_prenom = (?),cli_ville = (?) WHERE cli_id = (?)";
             PreparedStatement pmt = conn.prepareStatement(query);
             pmt.setString(1, cli.getNom());
@@ -56,12 +58,13 @@ public class ClientDAO {
     }
 
     /**
-     * Delete an existing client in database.
+     * delete an existing client in database.
      * @param cli
      */
-    public void Delete(Client cli) {
+    public void delete(Client cli) {
 
         try {
+            conn = Connexion.getConnexion();
             String query = "DELETE FROM client WHERE cli_id = (?)";
             PreparedStatement pmt = conn.prepareStatement(query);
             pmt.setInt(1,cli.getId());
@@ -74,10 +77,48 @@ public class ClientDAO {
     }
 
     /**
-     * Return a List of  all clients in database.
+     * Search an existing client by id in database.
+     * @param id
+     * @return client
+     */
+    public Client findById(int id) {
+        conn = Connexion.getConnexion();
+        ResultSet rs = null;
+        Client client = new Client();
+
+        try {
+            String query = "SELECT * FROM CLIENT WHERE cli_id = (?)";
+            PreparedStatement stm = conn.prepareStatement(query);
+
+            stm.setInt(1, id);
+            rs = stm.executeQuery();
+            if (rs.next()) {
+                client.setId(rs.getInt("cli_id"));
+                client.setNom(rs.getString("cli_nom"));
+                client.setPrenom(rs.getString("cli_prenom"));
+                client.setVille(rs.getString("cli_ville"));
+            }
+            else{
+                client.setId(0);
+                client.setNom("");
+                client.setPrenom("");
+                client.setVille("");
+            }
+            rs.close();
+            stm.close();
+            conn.close();
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return client;
+    }
+
+    /**
+     * Return a list of  all clients in database.
      * @return resultat
      */
-    public ArrayList List() {
+    public ArrayList list() {
         conn = Connexion.getConnexion();
         ResultSet rs = null;
         Client client;

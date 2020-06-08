@@ -5,23 +5,18 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.stage.FileChooser;
-import org.adrien.App;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.VBox;
 import org.adrien.model.Client;
 import org.adrien.model.ClientDAO;
-import org.json.simple.JSONObject;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.net.URL;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.ResourceBundle;
+
+import static org.adrien.controller.RegExpMatching.isValidInput;
 
 public class PrimaryController implements Initializable {
 
@@ -32,8 +27,6 @@ public class PrimaryController implements Initializable {
     @FXML
     private TableColumn<Client, String> col_nom;
     @FXML
-    private TableColumn<Client, String> col_ville;
-    @FXML
     private Button btn_sauver;
     @FXML
     private Button btn_annuler;
@@ -42,13 +35,21 @@ public class PrimaryController implements Initializable {
     @FXML
     private Button btn_update;
     @FXML
+    private Button btn_ok;
+    @FXML
     private TextField text_prenom;
     @FXML
     private TextField text_nom;
     @FXML
     private TextField text_ville;
     @FXML
-    private Button btn_export;
+    private VBox vbox_form;
+    @FXML
+    private Label label_error;
+    @FXML
+    private Label label_details;
+    @FXML
+    private BorderPane borderPane;
 
     ObservableList<Client> model = FXCollections.observableArrayList();
 
@@ -60,7 +61,7 @@ public class PrimaryController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         ClientDAO clientDAO = new ClientDAO();
-        ArrayList client = clientDAO.List();
+        ArrayList client = clientDAO.list();
         for (int i =0;i<client.size();i++){
             model.add((Client) client.get(i));
         }
@@ -68,10 +69,11 @@ public class PrimaryController implements Initializable {
         // Jonction du tableau avec les données
         col_prenom.setCellValueFactory(new PropertyValueFactory<>("prenom"));
         col_nom.setCellValueFactory(new PropertyValueFactory<>("nom"));
-        col_ville.setCellValueFactory(new PropertyValueFactory<>("ville"));
         // Indique au TableView le model à observer pour trouver les données
         lst_clients.setItems(model);
         getDataModelSelected();
+        vbox_form.setVisible(false);
+        label_error.setVisible(false);
     }
 
     /**
@@ -81,49 +83,81 @@ public class PrimaryController implements Initializable {
      */
     @FXML
     private void save(ActionEvent event) throws SQLException {
-        Client client = new Client();
-        ClientDAO repo = new ClientDAO();
-        client.setPrenom(text_prenom.getText());
-        client.setNom(text_nom.getText());
-        client.setVille(text_ville.getText());
-        repo.Insert(client);
-        model.add(client);
+        if(!vbox_form.isVisible()){
+            clearInputs();
+            setVboxVisible();
+        }else{
+            if(isValidInput(text_nom.getText()) && isValidInput(text_prenom.getText()) && isValidInput(text_ville.getText())){
+                label_error.setVisible(false);
+                Client client = new Client();
+                ClientDAO repo = new ClientDAO();
+                client.setPrenom(text_prenom.getText());
+                client.setNom(text_nom.getText());
+                client.setVille(text_ville.getText());
+                repo.insert(client);
+                model.add(client);
+                model.clear();
+                ArrayList clientList = repo.list();
+                model.addAll(clientList);
+            }
+            else{
+                label_error.setText("Saisie incorrecte");
+                label_error.setVisible(true);
+                System.out.println("Saisie invalide");
+            }
+        }
     }
 
     /**
-     * Update event to Update data.
+     * update event to update data.
      * @param event
      * @throws SQLException
      */
     @FXML
     private void update(ActionEvent event) throws SQLException {
-        ClientDAO repo = new ClientDAO();
-        Client client = new Client(lst_clients.getSelectionModel().getSelectedIndex(),text_nom.getText(),text_prenom.getText(),text_ville.getText());
-        client.setId(lst_clients.getSelectionModel().getSelectedItem().getId());
-        client.setPrenom(text_prenom.getText());
-        client.setNom(text_nom.getText());
-        client.setVille(text_ville.getText());
-        repo.Update(client);
-        model.clear();
-        ArrayList clientList = repo.List();
-        model.addAll(clientList);
+        if(!vbox_form.isVisible()){
+            setVboxVisible();
+        }else {
+            if(isValidInput(text_nom.getText()) && isValidInput(text_prenom.getText()) && isValidInput(text_ville.getText())) {
+                label_error.setVisible(false);
+                ClientDAO repo = new ClientDAO();
+                Client client = new Client(lst_clients.getSelectionModel().getSelectedIndex(), text_nom.getText(), text_prenom.getText(), text_ville.getText());
+                client.setId(lst_clients.getSelectionModel().getSelectedItem().getId());
+                client.setPrenom(text_prenom.getText());
+                client.setNom(text_nom.getText());
+                client.setVille(text_ville.getText());
+                repo.update(client);
+                model.clear();
+                ArrayList clientList = repo.list();
+                model.addAll(clientList);
+            }else{
+                label_error.setText("Saisie incorrecte");
+                label_error.setVisible(true);
+                System.out.println("Saisie invalide");
+            }
+        }
     }
 
     /**
-     * Delete event to Delete data.
+     * delete event to delete data.
      * @param event
      * @throws SQLException
      */
     @FXML
     private void delete(ActionEvent event) throws SQLException {
-        ClientDAO repo = new ClientDAO();
-        Client client = new Client(lst_clients.getSelectionModel().getSelectedIndex());
-        client.setId(lst_clients.getSelectionModel().getSelectedItem().getId());
-        System.out.println(client.getId());
-        repo.Delete(client);
-        model.clear();
-        ArrayList clientList = repo.List();
-        model.addAll(clientList);
+        if(!vbox_form.isVisible()){
+            setVboxVisible();
+        }else {
+            ClientDAO repo = new ClientDAO();
+            Client client = new Client(lst_clients.getSelectionModel().getSelectedIndex());
+            client.setId(lst_clients.getSelectionModel().getSelectedItem().getId());
+            System.out.println(client.getId());
+            repo.delete(client);
+            model.clear();
+            ArrayList clientList = repo.list();
+            model.addAll(clientList);
+            clearInputs();
+        }
     }
 
     /**
@@ -132,9 +166,14 @@ public class PrimaryController implements Initializable {
      */
     @FXML
     private void annuler(ActionEvent event) {
-    text_prenom.clear();
-    text_nom.clear();
-    text_ville.clear();
+    clearInputs();
+    setVboxUnvisible();
+    }
+
+    private void clearInputs(){
+        text_prenom.clear();
+        text_nom.clear();
+        text_ville.clear();
     }
 
     /**
@@ -142,47 +181,22 @@ public class PrimaryController implements Initializable {
      */
     @FXML
     private void getDataModelSelected(){
-        lst_clients.setOnMouseClicked(event1 -> {
-            Client client2 = new Client(lst_clients.getSelectionModel().getSelectedIndex());
-            client2.setId(lst_clients.getSelectionModel().getSelectedItem().getId());
-            client2.setNom(lst_clients.getSelectionModel().getSelectedItem().getNom());
-            client2.setPrenom(lst_clients.getSelectionModel().getSelectedItem().getPrenom());
-            client2.setVille(lst_clients.getSelectionModel().getSelectedItem().getVille());
-            text_nom.setText(client2.getNom());
-            text_prenom.setText(client2.getPrenom());
-            text_ville.setText(client2.getVille());
+         lst_clients.setOnMouseClicked(event1 -> {
+         ClientDAO repo = new ClientDAO();
+         Client client = repo.findById(lst_clients.getSelectionModel().getSelectedItem().getId());
+         text_nom.setText(client.getNom());
+         text_prenom.setText(client.getPrenom());
+         text_ville.setText(client.getVille());
         });
     }
 
-    /**
-     * Export the selected client to Json file.
-     * @param event
-     */
     @FXML
-    private void sauvHandler(ActionEvent event) {
-
-        JSONObject sauvegarde = new JSONObject();
-        sauvegarde.put("prenom",text_prenom.getText());
-        sauvegarde.put("nom",text_nom.getText());
-        sauvegarde.put("ville",text_ville.getText());
-        // Déclaration du FileChoser
-        FileChooser fileChooser = new FileChooser();
-        // Ajout d'un filtre d'extention
-        FileChooser.ExtensionFilter extensionFilter = new FileChooser.ExtensionFilter("Json file (*.json", "*.json");
-        fileChooser.getExtensionFilters().add(extensionFilter);
-        //Affichage du popup
-        File file = fileChooser.showSaveDialog(App.getStage());
-        if (file != null) {
-            //Si l'extension n'est pas bien renseignée on l'ajoute
-            if (!file.getPath().endsWith(".json")) file = new File(file.getPath() + ".json");
-            //On écrit le fichier avec un try..catch en cas d'erreur
-            try (FileWriter fichier = new FileWriter(file)) {
-                fichier.write(sauvegarde.toJSONString());
-                fichier.flush();
-            }catch (IOException e){
-                //On affiche l'erreur en console
-                System.out.println(e.getMessage());
-            }
-        }
+    private void setVboxVisible(){
+       vbox_form.setVisible(true);
     }
+    @FXML
+    private void setVboxUnvisible(){
+        vbox_form.setVisible(false);
+    }
+
 }

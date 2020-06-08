@@ -1,6 +1,6 @@
-<h1>JavaFX CRUD</h1>
+<h1>JavaFX ClientManager</h1>
 
-CRUD with JavaFX and JDBC.
+CRUD application with JavaFX and JDBC including DAO methods test with JUnit.
 
 
 
